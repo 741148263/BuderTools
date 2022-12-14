@@ -1,0 +1,20 @@
+QWidget {
+    background-color: azure;
+}
+
+QTabBar {
+    margin: 0;
+    padding: 0;
+}
+
+QTabBar::tab:hover {
+    background-color: #d4e597;
+}
+QTabBar:selected {
+    background-color: red;
+}
+QTextEdit {
+    font-size: 20px;
+    color: black;
+}
+
