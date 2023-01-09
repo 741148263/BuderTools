@@ -13,6 +13,7 @@ def get_style() -> str:
         raise Exception("window.css文件不存在")
     else:
         try:
+
             with open("static/qss/window.css", "r") as fp:
                 return fp.read()
         except Exception as e:
@@ -20,7 +21,10 @@ def get_style() -> str:
 
 
 if __name__ == '__main__':
+    download_path = "./download"
     init_config()
+    if not os.path.exists(download_path):
+        os.makedirs(download_path)
     app = QApplication(sys.argv)
     QApplication.setStyle("Fusion")
     window = MainWindow()

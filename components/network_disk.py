@@ -85,6 +85,7 @@ class NetWorkDiskPage(QWidget):
         self.result_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Fixed)
         self.result_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Fixed)
         self.result_table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Fixed)
+        self.result_table.horizontalHeader().setSectionResizeMode(5, QHeaderView.Fixed)
         # 设置单元格禁止编辑
         self.result_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # 设置整行
@@ -112,7 +113,7 @@ class NetWorkDiskPage(QWidget):
         self.result_table.setRowCount(0)
         self.source_list.clear()
         search_thread = GetSourceThread(book_search_name, self.page_edit.text())
-        search_thread.search_result_signal_trigger.connect(self.insert_book_result)
+        search_thread.search_result_pyqtSignal_trigger.connect(self.insert_book_result)
         search_thread.start()
         search_thread.exec()
 
@@ -134,23 +135,26 @@ class NetWorkDiskPage(QWidget):
             title_cell_item = QTableWidgetItem(str(source.get("title")))
             title_cell_item.setTextAlignment(Qt.AlignCenter)
             self.result_table.setItem(count, 1, title_cell_item)
+            source_from_item = QTableWidgetItem("阿里")
+            source_from_item.setTextAlignment(Qt.AlignCenter)
+            self.result_table.setItem(count, 2, source_from_item)
             author_cell_item = QTableWidgetItem(str(source.get("available_time")))
             author_cell_item.setTextAlignment(Qt.AlignCenter)
-            self.result_table.setItem(count, 2, author_cell_item)
+            self.result_table.setItem(count, 3, author_cell_item)
             update_chapter_cell_item = QTableWidgetItem(str(source.get("insert_time")))
             update_chapter_cell_item.setTextAlignment(Qt.AlignCenter)
-            self.result_table.setItem(count, 3, update_chapter_cell_item)
+            self.result_table.setItem(count, 4, update_chapter_cell_item)
             add_book_btn = QPushButton("复制")
             add_book_btn.clicked.connect(self.copy_url)
             # 绑按钮事件
-            self.result_table.setCellWidget(count, 4, add_book_btn)
+            self.result_table.setCellWidget(count, 5, add_book_btn)
 
     def copy_url(self):
         click_btn = self.sender()
         if click_btn:
             row_index = self.result_table.indexAt(click_btn.pos()).row()
             col_index = self.result_table.indexAt(click_btn.pos()).column()
-            if col_index == 4:
+            if col_index == 5:
                 target_book = self.source_list[row_index]
                 target_url = target_book["page_url"]
                 if target_url:
@@ -162,7 +166,7 @@ class NetWorkDiskPage(QWidget):
 
 
 class GetSourceThread(QThread):
-    search_result_signal_trigger = pyqtSignal(dict)
+    search_result_pyqtSignal_trigger = pyqtSignal(dict)
 
     def __init__(self, search_key, page):
         super(GetSourceThread, self).__init__()
@@ -175,5 +179,5 @@ class GetSourceThread(QThread):
             data = base64.b64decode(resp.text)
             result = json.loads(data)
             if resp.status_code == 200:
-                self.search_result_signal_trigger.emit(result)
+                self.search_result_pyqtSignal_trigger.emit(result)
                 break

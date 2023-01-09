@@ -1,6 +1,7 @@
-from PyQt5.QtCore import Qt, QThread
+from PyQt5.QtCore import Qt, QDateTime, QTimer
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QTabWidget, QMainWindow
+from PyQt5.QtWidgets import QTabWidget, QMainWindow, QStatusBar, QLabel
+
 
 from components.image import ImagePage
 from components.music import MusicPage
@@ -17,6 +18,8 @@ class MainWindow(QMainWindow):
         self.setup_window_base()
         self.setup_ui()
         self.setup_db()
+        self.setup_status_bar()
+        self.setup_timer()
 
     def setup_window_base(self):
         self.setWindowTitle(SOFTWARE_TITLE + " " + SOFTWARE_VERSION)
@@ -35,19 +38,40 @@ class MainWindow(QMainWindow):
         # tab控件详情页面
         self.novel_page = NovelPage()
         self.music_page = MusicPage()
-        self.image_page = ImagePage()
+        # self.image_page = ImagePage()
         self.network_disk_page = NetWorkDiskPage()
+        # self.book_page = BookPage()
         self.tab_widget.addTab(self.novel_page, QIcon("static/icon/book.png"), "小说")
         self.tab_widget.addTab(self.music_page, QIcon("static/icon/music.png"), "音乐")
-        self.tab_widget.addTab(self.image_page, QIcon("static/icon/image.png"), "图片")
-        self.tab_widget.addTab(self.network_disk_page, QIcon("static/icon/networkdisk.png"), "阿里云盘搜索")
+        # self.tab_widget.addTab(self.image_page, QIcon("static/icon/image.png"), "图片")
+        self.tab_widget.addTab(self.network_disk_page, QIcon("static/icon/networkdisk.png"), "云盘")
+        # self.tab_widget.addTab(self.book_page, QIcon("static/icon_svg/book_lib.png"), "图书")
         # 设置界面的中心控件
         self.setCentralWidget(self.tab_widget)
 
+    def setup_status_bar(self):
+        self.status_bar = QStatusBar(self)
+        self.temp1_label = QLabel()
+        self.temp2_label = QLabel()
+        self.temp3_label = QLabel()
+        self.temp4_label = QLabel()
+        self.temp5_label = QLabel()
+        self.time_label = QLabel()
+        self.time_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.status_bar.addWidget(self.temp1_label, 1)
+        self.status_bar.addWidget(self.temp2_label, 1)
+        self.status_bar.addWidget(self.temp3_label, 1)
+        self.status_bar.addWidget(self.temp4_label, 1)
+        self.status_bar.addWidget(self.temp5_label, 1)
+        self.status_bar.addPermanentWidget(self.time_label, 1)
+        self.setStatusBar(self.status_bar)
 
-class GetSourceThread(QThread):
-    def __init__(self):
-        super(GetSourceThread, self).__init__()
+    def setup_timer(self):
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_time)
+        self.timer.start(1000)
 
-    def run(self) -> None:
-        pass
+    def update_time(self):
+        time = QDateTime.currentDateTime()
+        time_display = time.toString("yyyy-MM-dd hh:mm:ss dddd")
+        self.time_label.setText(time_display)

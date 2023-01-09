@@ -99,14 +99,16 @@ class BookSqlHandler(object):
         title_list = []
         href_list = []
         query = QSqlQuery(self.db)
-        query_result = query.exec_(f"select book_name, read_chapter_index, id, book_from from bookcase where id = {int(book_id)};")
+        query_result = query.exec_(
+            f"select book_name, read_chapter_index, id, book_from from bookcase where id = {int(book_id)};")
         if query_result:
             while query.next():
                 book_dict["book_name"] = query.value(0)
                 book_dict["read_index"] = query.value(1)
                 book_dict["id"] = query.value(2)
                 book_dict["from"] = query.value(3)
-            query.exec_(f"select id, chapter_name, chapter_href from book_chapter where bookcase_id = {int(book_id)} order by id;")
+            query.exec_(
+                f"select id, chapter_name, chapter_href from book_chapter where bookcase_id = {int(book_id)} order by id;")
             while query.next():
                 id_list.append(query.value(0))
                 title_list.append(query.value(1))

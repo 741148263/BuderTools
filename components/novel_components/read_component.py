@@ -39,15 +39,17 @@ class ReadComponent(QWidget):
         if self.hide_flag:
             self.left_side.hide()
             self.hide_flag = False
+            self.hide_btn.setText("显示")
         else:
             self.left_side.show()
             self.hide_flag = True
+            self.hide_btn.setText("隐藏")
 
     def last_chapter_request(self):
         if self.read_index != 0:
             self.read_index -= 1
             self.get_content()
-
+            
     def next_chapter_request(self):
         if self.read_index != len(self.book_titles) - 1:
             self.read_index += 1
@@ -96,7 +98,7 @@ class ReadComponent(QWidget):
     def get_content(self):
         current_href = self.book_hrefs[self.read_index]
         get_thread = GetContentThread(current_href, self.book_from, self.chapter_id_list[self.read_index])
-        get_thread.conentSignalTrigger.connect(self.update_content)
+        get_thread.conentpyqtSignalTrigger.connect(self.update_content)
         get_thread.start()
         get_thread.exec_()
 
@@ -162,7 +164,7 @@ class ReadComponent(QWidget):
 
 
 class GetContentThread(QThread):
-    conentSignalTrigger = pyqtSignal(list)
+    conentpyqtSignalTrigger = pyqtSignal(list)
 
     def __init__(self, target_href, book_from, chapter_id):
         super(GetContentThread, self).__init__()
@@ -181,4 +183,4 @@ class GetContentThread(QThread):
                               :book_pattern.get("chapterContentStopIndex")]
         else:
             chapter_content = chapter_content_parse.xpath(book_pattern.get("chapterContentXpath"))
-        self.conentSignalTrigger.emit(chapter_content)
+        self.conentpyqtSignalTrigger.emit(chapter_content)

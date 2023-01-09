@@ -8,7 +8,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QTableWidget, QHeaderView, \
     QAbstractItemView, QTableWidgetItem
 
-from constants.window_constant import SEARCH_RESULT_TABLE_COLUMN, SEARCH_RULES, INSERT_BOOK_CASE
+from constants.window_constant import SEARCH_RESULT_TABLE_COLUMN, SEARCH_RULES
 from window_func.db_handler import BookSqlHandler
 from window_func.notify_handler import NotificationWindow
 
@@ -71,12 +71,13 @@ class SearchPage(QWidget):
         self.result_table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Fixed)
         self.result_table.horizontalHeader().setSectionResizeMode(5, QHeaderView.Fixed)
         self.result_table.horizontalHeader().setSectionResizeMode(6, QHeaderView.Fixed)
-        # 设置单元格禁止编辑
+        # 设置单元格禁止编辑1
         self.result_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # 设置整行
         self.result_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         # 绑定获取单元格内容方法
         self.bottom_layout.addWidget(self.result_table)
+        self.result_table.hide()
 
     def search_book(self):
         book_search_name = self.search_key_edit.text()
@@ -84,43 +85,47 @@ class SearchPage(QWidget):
             self.result_table.setRowCount(0)
             self.search_result_books.clear()
             search_thread = SearchThread(book_search_name)
-            search_thread.search_result_signal_trigger.connect(self.insert_book_result)
+            search_thread.search_result_pyqtSignal_trigger.connect(self.insert_book_result)
             search_thread.start()
             search_thread.exec()
 
     def insert_book_result(self, book_obj: dict):
-        self.search_result_books.append(book_obj)
-        count = self.result_table.rowCount()
-        self.result_table.insertRow(self.result_table.rowCount())
-        # index
-        index_cell_item = QTableWidgetItem(str(count + 1))
-        index_cell_item.setTextAlignment(Qt.AlignCenter)
-        self.result_table.setItem(count, 0, index_cell_item)
-        # title
-        title_cell_item = QTableWidgetItem(str(book_obj.get("title")))
-        title_cell_item.setTextAlignment(Qt.AlignCenter)
-        self.result_table.setItem(count, 1, title_cell_item)
-        # author
-        author_cell_item = QTableWidgetItem(str(book_obj.get("author")))
-        author_cell_item.setTextAlignment(Qt.AlignCenter)
-        self.result_table.setItem(count, 2, author_cell_item)
-        # 最新章节
-        update_chapter_cell_item = QTableWidgetItem(str(book_obj.get("update_chapter")))
-        update_chapter_cell_item.setTextAlignment(Qt.AlignCenter)
-        self.result_table.setItem(count, 3, update_chapter_cell_item)
-        # 来源
-        from_cell_item = QTableWidgetItem(str(book_obj.get("from")))
-        from_cell_item.setTextAlignment(Qt.AlignCenter)
-        self.result_table.setItem(count, 4, from_cell_item)
-        # 状态
-        status_cell_item = QTableWidgetItem(str(book_obj.get("status")))
-        status_cell_item.setTextAlignment(Qt.AlignCenter)
-        self.result_table.setItem(count, 5, status_cell_item)
-        # 按钮
-        add_book_btn = QPushButton("加入书架")
-        add_book_btn.clicked.connect(self.add_book)
-        # 绑按钮事件
-        self.result_table.setCellWidget(count, 6, add_book_btn)
+        if book_obj:
+            self.result_table.show()
+            self.search_result_books.append(book_obj)
+            count = self.result_table.rowCount()
+            self.result_table.insertRow(self.result_table.rowCount())
+            # index
+            index_cell_item = QTableWidgetItem(str(count + 1))
+            index_cell_item.setTextAlignment(Qt.AlignCenter)
+            self.result_table.setItem(count, 0, index_cell_item)
+            # title
+            title_cell_item = QTableWidgetItem(str(book_obj.get("title")))
+            title_cell_item.setTextAlignment(Qt.AlignCenter)
+            self.result_table.setItem(count, 1, title_cell_item)
+            # author
+            author_cell_item = QTableWidgetItem(str(book_obj.get("author")))
+            author_cell_item.setTextAlignment(Qt.AlignCenter)
+            self.result_table.setItem(count, 2, author_cell_item)
+            # 最新章节
+            update_chapter_cell_item = QTableWidgetItem(str(book_obj.get("update_chapter")))
+            update_chapter_cell_item.setTextAlignment(Qt.AlignCenter)
+            self.result_table.setItem(count, 3, update_chapter_cell_item)
+            # 来源
+            from_cell_item = QTableWidgetItem(str(book_obj.get("from")))
+            from_cell_item.setTextAlignment(Qt.AlignCenter)
+            self.result_table.setItem(count, 4, from_cell_item)
+            # 状态
+            status_cell_item = QTableWidgetItem(str(book_obj.get("status")))
+            status_cell_item.setTextAlignment(Qt.AlignCenter)
+            self.result_table.setItem(count, 5, status_cell_item)
+            # 按钮
+            add_book_btn = QPushButton("加入书架")
+            add_book_btn.clicked.connect(self.add_book)
+            # 绑按钮事件
+            self.result_table.setCellWidget(count, 6, add_book_btn)
+        else:
+            self.result_table.hide()
 
     def add_book(self):
         click_btn = self.sender()
@@ -130,7 +135,7 @@ class SearchPage(QWidget):
             if col_index == 6:
                 target_book = self.search_result_books[row_index]
                 add_thread = AddBookThread(target_book)
-                add_thread.add_result_signal_trigger.connect(self.notify_result)
+                add_thread.add_result_pyqtSignal_trigger.connect(self.notify_result)
                 add_thread.start()
                 add_thread.exec()
 
@@ -142,7 +147,7 @@ class SearchPage(QWidget):
 
 
 class AddBookThread(QThread):
-    add_result_signal_trigger = pyqtSignal(bool)
+    add_result_pyqtSignal_trigger = pyqtSignal(bool)
 
     def __init__(self, book: dict):
         super(AddBookThread, self).__init__()
@@ -151,7 +156,7 @@ class AddBookThread(QThread):
     def run(self) -> None:
         insert_db = BookSqlHandler("add_thread")
         insert_result = insert_db.insert_book(self.target_book)
-        self.add_result_signal_trigger.emit(insert_result)
+        self.add_result_pyqtSignal_trigger.emit(insert_result)
         no_chapter_list = insert_db.search_no_chapter()
         if no_chapter_list:
             for book in no_chapter_list:
@@ -164,8 +169,6 @@ class AddBookThread(QThread):
                     book_pattern.get("chapterXpath").get("chapterTitleXpath"))[book_pattern.get("chapterStartIndex"):]
                 chapter_href_list = chapter_list_parse.xpath(book_pattern.get("chapterXpath").get("chapterHrefXpath"))[
                                     book_pattern.get("chapterStartIndex"):]
-                print("chapter_title_list", chapter_title_list)
-                print("chapter_href_list", chapter_href_list)
                 if book_pattern.get("chapterHrefJoin"):
                     chapter_href_list = [book_pattern.get("baseUrl") + href for href in chapter_href_list]
                 if all([chapter_title_list, chapter_href_list]):
@@ -176,7 +179,7 @@ class AddBookThread(QThread):
 
 # 搜索线程
 class SearchThread(QThread):
-    search_result_signal_trigger = pyqtSignal(dict)
+    search_result_pyqtSignal_trigger = pyqtSignal(dict)
 
     def __init__(self, book_key):
         super(SearchThread, self).__init__()
@@ -223,7 +226,7 @@ class SearchThread(QThread):
             else:
                 statuses = ["/" for _ in titles]
             for title, update_chapter, author, status, href in zip(titles, update_chapters, authors, statuses, hrefs):
-                self.search_result_signal_trigger.emit({
+                self.search_result_pyqtSignal_trigger.emit({
                     "title": title,
                     "update_chapter": update_chapter,
                     "author": author,

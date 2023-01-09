@@ -53,7 +53,8 @@ class NotificationItem(QWidget):
         layout.setVerticalSpacing(10)
 
         # 标题左边图标
-        layout.addWidget(QLabel(self, pixmap=NotificationIcon.icon(ntype)), 0, 0)
+        layout.addWidget(
+            QLabel(self, pixmap=NotificationIcon.icon(ntype)), 0, 0)
 
         # 标题
         self.labelTitle = QLabel(title, self)
@@ -138,7 +139,8 @@ class NotificationWindow(QListWidget):
     _instance = None
 
     def __init__(self, parent=None, *args, **kwargs):
-        super(NotificationWindow, self).__init__(parent=parent, *args, **kwargs)
+        super(NotificationWindow, self).__init__(
+            parent=parent, *args, **kwargs)
         self.setSpacing(20)
         self.setMinimumWidth(412)
         self.setMaximumWidth(412)

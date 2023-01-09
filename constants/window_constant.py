@@ -1,5 +1,9 @@
 import os
 
+# 图书URL
+SEARCH_BOOK_BASE_URL = "https://www.book123.info"
+SEARCH_BOOK_URL = "https://www.book123.info/list?key={}"
+
 # 盘api列表
 HOST_LIST = [
     'https://api.upyunso2.com',
@@ -50,7 +54,7 @@ FOREIGN KEY ("bookcase_id") REFERENCES "bookcase" ("id") ON DELETE NO ACTION ON 
 INSERT_BOOK_CASE = 'insert into "bookcase" values ("{}", "{}", "{}", "{}", "{}", "{}", "{}", "{}", "{}")'
 
 # 查询当前书架的数量
-SEARCH_BOOK_COUNT_SQL = "select count(*) from bookcase"
+SEARCH_BOOK_COUNT_SQL = "SELECT MAX(id) FROM bookcase"
 
 # 查询书架所有书
 SEARCH_BOOK_SQL = "select * from bookcase;"
@@ -67,8 +71,14 @@ UPDATE_CHAPTER_STATUS_SQL = "update bookcase set has_chapter_status = 1 where id
 # 搜索表格表头常量
 SEARCH_RESULT_TABLE_COLUMN = ["序号", "书名", "作者", "最新章节", "来源", "状态", "操作"]
 
+# 图书搜索表头常量
+SEARCH_BOOK_TABLE_COLUMN = ["序号", "书名", "作者", "评分", "下载状态", "操作"]
+
 # 盘表头
-NETWORK_DISK_TABLE_COLUMN = ["序号", "资源名", "有效期", "收录时间","操作"]
+NETWORK_DISK_TABLE_COLUMN = ["序号", "资源名", "资源来源", "有效期", "收录时间", "操作"]
+
+# music请求头
+MUSIC_SEARCH_TABLE_COLUMN = ["序号", "歌曲名称", "歌手", "分类", "音质"]
 
 SEARCH_RULES = {
     "龙坛书网": {
@@ -97,7 +107,8 @@ SEARCH_RULES = {
     "笔趣阁": {
         "sourceName": "笔趣阁",
         "searchUrl": "https://so.biqusoso.com/s1.php?ie=utf-8&siteid=qu-la.com&q={}",
-        "agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+        "agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 "
+                 "Safari/537.36",
         "searchCharSet": "utf-8",
         "chapterListCharSet": "gbk",
         "baseUrl": "http://www.qu-la.com",
