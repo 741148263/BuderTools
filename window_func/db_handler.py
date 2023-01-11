@@ -33,16 +33,23 @@ class BookSqlHandler(object):
         query = QSqlQuery(self.db)
         query.exec_(SEARCH_BOOK_COUNT_SQL)
         count = 0
-        while query.next():
-            count += query.value(0)
+        try:
+            while query.next():
+                data = query.value(0)
+                count += query.value(0)
+        except:
+            pass
         return count
 
     def insert_book(self, book: dict):
         query = QSqlQuery(self.db)
         query.exec_(SEARCH_BOOK_COUNT_SQL)
         count = 0
-        while query.next():
-            count += query.value(0)
+        try:
+            while query.next():
+                count += query.value(0)
+        except:
+            pass
         command = INSERT_BOOK_CASE.format(count + 1, book["title"], book["author"], book["update_chapter"],
                                           book["from"], book["status"], book["href"], 0, 0)
         return query.exec_(command)

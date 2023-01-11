@@ -16,6 +16,7 @@ ROOT_DIR = os.getcwd()
 
 # 配置文件
 CONFIG_DIR = os.path.join(ROOT_DIR, "setting/config.ini")
+SETTING_DIR = os.path.join(ROOT_DIR, "setting")
 
 # 窗口常量
 SOFTWARE_TITLE = "BuderTools"
@@ -78,7 +79,7 @@ SEARCH_BOOK_TABLE_COLUMN = ["序号", "书名", "作者", "评分", "下载状�
 NETWORK_DISK_TABLE_COLUMN = ["序号", "资源名", "资源来源", "有效期", "收录时间", "操作"]
 
 # music请求头
-MUSIC_SEARCH_TABLE_COLUMN = ["序号", "歌曲名称", "歌手", "分类", "音质"]
+MUSIC_SEARCH_TABLE_COLUMN = ["序号", "歌曲名称", "歌手", "分类", "音质", "资源类型"]
 
 SEARCH_RULES = {
     "龙坛书网": {

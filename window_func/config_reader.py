@@ -1,13 +1,15 @@
 import os.path
 from configparser import ConfigParser
 
-from constants.window_constant import CONFIG_DIR
+from constants.window_constant import CONFIG_DIR, SETTING_DIR
 
 
 def init_config():
     """
     初始化配置文件
     """
+    if not os.path.exists(SETTING_DIR):
+        os.makedirs(SETTING_DIR)
     if not os.path.exists(CONFIG_DIR):
         writer = ConfigParser()
         writer.add_section("read")

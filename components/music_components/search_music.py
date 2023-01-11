@@ -6,7 +6,7 @@ import requests
 from PyQt5 import QtCore
 from lxml import etree
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QLabel, QSlider, QTableWidget, \
-    QHeaderView, QAbstractItemView, QTableWidgetItem, QMenu
+    QHeaderView, QAbstractItemView, QTableWidgetItem, QMenu, QFileDialog
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QUrl, QTimer
 from PyQt5.QtGui import QIcon, QImage, QPixmap
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
@@ -35,6 +35,7 @@ class SearchMusicPage(QWidget):
         self.play_duration.sliderMoved.connect(self.music_time_adjust)
         self.play_duration.sliderReleased.connect(self.music_time_adjust_over)
         self.play_duration.sliderPressed.connect(self.slider_play_press)
+        self.open_folder_top.clicked.connect(self.load_local_musics)
 
     def setup_ui(self):
         self.global_layout = QVBoxLayout()
@@ -60,25 +61,40 @@ class SearchMusicPage(QWidget):
         self.previous_btn = QPushButton("上一首")
         self.play_btn = QPushButton("播放")
         self.next_btn = QPushButton("下一首")
+
+        duration_layout = QVBoxLayout()
+
+        self.music_title = QLabel()
+        self.music_title.setText("暂无播放音乐")
         self.play_duration = QSlider(Qt.Horizontal)
         self.play_duration.setMinimum(0)
         self.play_duration.setMaximum(1000)
+
+        duration_layout.addWidget(self.music_title)
+        duration_layout.addWidget(self.play_duration)
+
+        duration_widget = QWidget()
+        duration_widget.setLayout(duration_layout)
 
         self.volumn_splider = QSlider(Qt.Horizontal)
         self.volumn_splider.setMinimum(0)
         self.volumn_splider.setMaximum(100)
         self.volumn_splider.setValue(self.play_volume)
 
+        self.open_folder = QPushButton("本地音乐")
+
         self.foot_layout.addWidget(self.previous_btn)
         self.foot_layout.addWidget(self.play_btn)
         self.foot_layout.addWidget(self.next_btn)
-        self.foot_layout.addWidget(self.play_duration)
+        self.foot_layout.addWidget(duration_widget)
         self.foot_layout.addWidget(self.volumn_splider)
+        self.foot_layout.addWidget(self.open_folder)
 
         self.play_btn.clicked.connect(self.music_state)
         self.previous_btn.clicked.connect(self.play_previous_music)
         self.next_btn.clicked.connect(self.play_next_music)
         self.volumn_splider.valueChanged.connect(self.music_volume_change)
+        self.open_folder.clicked.connect(self.load_local_musics)
 
     def setup_search_top(self):
         self.top_layout = QHBoxLayout()
@@ -94,11 +110,14 @@ class SearchMusicPage(QWidget):
             'color: rgb(180, 180, 180); font: 16px "微软雅黑";')
         self.search_btn = QPushButton(
             QIcon("static/icon/book_search_btn.png"), "搜索")
+        self.open_folder_top = QPushButton("本地音乐")
+        self.open_folder_top.setFixedWidth(100)
         self.search_btn.setStyleSheet(
             'color: rgb(180, 180, 180); font: 16px "微软雅黑";')
         self.search_btn.setFixedWidth(100)
         self.top_layout.addWidget(self.search_key_edit)
         self.top_layout.addWidget(self.search_btn)
+        self.top_layout.addWidget(self.open_folder_top)
 
     def setup_search_result(self):
         self.bottom_layout = QHBoxLayout()
@@ -125,6 +144,7 @@ class SearchMusicPage(QWidget):
         self.music_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Fixed)
         self.music_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Fixed)
         self.music_table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Fixed)
+        self.music_table.horizontalHeader().setSectionResizeMode(5, QHeaderView.Fixed)
         self.music_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.music_table.setSelectionBehavior(QAbstractItemView.SelectRows)
 
@@ -144,6 +164,7 @@ class SearchMusicPage(QWidget):
 
     def insert_musics(self, music_dict):
         if music_dict:
+            is_local = music_dict.get("is_local")
             self.bottom_widget.show()
             self.foot_widget.show()
             self.search_result_musics.append(music_dict)
@@ -163,13 +184,20 @@ class SearchMusicPage(QWidget):
             author_cell_item.setTextAlignment(Qt.AlignCenter)
             self.music_table.setItem(count, 2, author_cell_item)
             # 分类
-            update_chapter_cell_item = QTableWidgetItem(str(music_dict.get("music_type")))
+            update_chapter_cell_item = QTableWidgetItem(str(music_dict.get("music_type", "/")))
             update_chapter_cell_item.setTextAlignment(Qt.AlignCenter)
             self.music_table.setItem(count, 3, update_chapter_cell_item)
             # 音质
-            from_cell_item = QTableWidgetItem(str(music_dict.get("music_song_quality")))
+            from_cell_item = QTableWidgetItem(str(music_dict.get("music_song_quality", "/")))
             from_cell_item.setTextAlignment(Qt.AlignCenter)
             self.music_table.setItem(count, 4, from_cell_item)
+            # 音质
+            if is_local:
+                from_cell_item = QTableWidgetItem("本地音乐")
+            else:
+                from_cell_item = QTableWidgetItem("网络音乐")
+            from_cell_item.setTextAlignment(Qt.AlignCenter)
+            self.music_table.setItem(count, 5, from_cell_item)
 
     def search_music(self):
         music_key = self.search_key_edit.text()
@@ -191,11 +219,18 @@ class SearchMusicPage(QWidget):
 
     def music_play(self, music_detail: dict):
         try:
+            is_local = music_detail.get("is_local")
             self.play_duration.setValue(0)
-            self.img_resp = requests.get(music_detail["photo_url"])
-            self.img = QImage.fromData(self.img_resp.content)
-            self.img_label.setPixmap(QPixmap.fromImage(self.img))
-            self.player.setMedia(QMediaContent(QUrl(music_detail["music_url"])))
+            if is_local:
+                self.player.setMedia(QMediaContent(QUrl.fromLocalFile(music_detail["music_path"])))
+                self.left_widget.hide()
+            else:
+                self.img_resp = requests.get(music_detail["photo_url"])
+                self.img = QImage.fromData(self.img_resp.content)
+                self.img_label.setPixmap(QPixmap.fromImage(self.img))
+                self.player.setMedia(QMediaContent(QUrl(music_detail["music_url"])))
+                self.left_widget.show()
+            self.music_title.setText(music_detail["music_name"])
             self.playing = True
             self.player.play()
         except Exception as e:
@@ -261,10 +296,12 @@ class SearchMusicPage(QWidget):
         if action == delete_item:
             row_index = self.music_table.currentRow()
             download_music_detail = self.search_result_musics[row_index]
-            download_thread = DownloadThread(download_music_detail)
-            download_thread.downloadSignalTrigger.connect(self.notify_download_state)
-            download_thread.start()
-            download_thread.exec()
+            is_local = download_music_detail.get("is_local", False)
+            if not is_local:
+                download_thread = DownloadThread(download_music_detail)
+                download_thread.downloadSignalTrigger.connect(self.notify_download_state)
+                download_thread.start()
+                download_thread.exec()
 
     def notify_download_state(self, download_info: dict):
         state = download_info["state"]
@@ -273,6 +310,26 @@ class SearchMusicPage(QWidget):
             NotificationWindow.success(self, "成功", "下载【{}】成功".format(music_name))
         else:
             NotificationWindow.error(self, "成功", "下载【{}】失败".format(music_name))
+
+    def load_local_musics(self):
+        dir_path = QFileDialog.getExistingDirectory(self, "打开目录", os.path.join(ROOT_DIR, "download"))
+        if not os.path.exists(dir_path):
+            NotificationWindow.warning(self, "提示", "{}路径不存在".format(dir_path))
+        else:
+            self.open_folder_top.hide()
+            self.left_widget.hide()
+            self.music_name_list.clear()
+            self.search_result_musics.clear()
+            self.music_table.setRowCount(0)
+            self.search_result_musics.clear()
+            self.play_index = -1
+            open_folder_thread = OpenFolderThread(dir_path)
+            open_folder_thread.openFolderSignalTrigger.connect(self.insert_musics)
+            open_folder_thread.start()
+            open_folder_thread.exec()
+
+    def insert_local_musics(self):
+        pass
 
 
 class SearchMusic(QThread):
@@ -338,6 +395,7 @@ class SearchMusic(QThread):
                 '//*[@id="body"]/div/div/div[1]/div[1]/div/div[1]/div/h4/text()')[0].replace("\t", "")
             target_chat_index = music_sound_quality.index("[")
             music_detail = {
+                "is_local": False,
                 "music_url": self.base_url + music_url[0],
                 "music_type": music_type[0],
                 "music_song_quality": music_sound_quality[target_chat_index + 1:-1],
@@ -377,3 +435,22 @@ class DownloadThread(QThread):
         except Exception:
             transmit_dict.update({"state": False})
             self.downloadSignalTrigger.emit(transmit_dict)
+
+
+class OpenFolderThread(QThread):
+    openFolderSignalTrigger = pyqtSignal(dict)
+
+    def __init__(self, target_path):
+        super(OpenFolderThread, self).__init__()
+        self.target_path = target_path
+
+    def run(self) -> None:
+        for root, dirs, files in os.walk(self.target_path, topdown=True):
+            for file in files:
+                music_detail = {
+                    "is_local": True,
+                    "music_path": os.path.join(root, file),
+                    "singer_name": os.path.basename(root),
+                    "music_name": os.path.splitext(file)[0]
+                }
+                self.openFolderSignalTrigger.emit(music_detail)
